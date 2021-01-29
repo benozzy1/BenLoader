@@ -35,7 +35,3 @@ enabled=PoolStringArray( "FileSystemView" )
 
 theme/custom="res://Themes/TestTheme.theme"
 theme/custom_font="res://Assets/Fonts/Font.tres"
-
-[rendering]
-
-environment/default_environment="res://default_env.tres"
