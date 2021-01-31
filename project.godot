@@ -25,6 +25,7 @@ AppHandler="*res://Scripts/AppHandler.gd"
 
 [display]
 
+window/vsync/use_vsync=false
 window/stretch/shrink=2.0
 
 [editor_plugins]

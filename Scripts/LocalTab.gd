@@ -29,11 +29,9 @@ func refresh():
 		dir.open(APP_PATH);
 		dir.make_dir(APP_PATH + "games");
 	
-	print("Game directory found. Opening...");
 	var repos = list_files_in_directory(APP_PATH + "games");
 	set_info_text("", Color.black);
 	
-	print(dir.get_current_dir())
 	var button_group = ButtonGroup.new();
 	for repo_data in repos:
 		var folder_name = repo_data;

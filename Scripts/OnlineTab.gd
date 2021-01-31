@@ -14,7 +14,7 @@ onready var versions_option_button = get_node(versions_option_button_path);
 
 var repo_data_dict = {}
 
-var auth = "52622b7669e073c0c781f82eb7b18e0a6c747f19";
+var auth = "0664df420b845cd10bf8496417a8c22820cbb9e0";
 var headers = ["Authorization: token " + auth]
 
 var download_request;
@@ -30,7 +30,6 @@ var download_percent = 0;
 func _process(delta):
 	if downloading:
 		download_percent = (float(download_request.get_downloaded_bytes()) / float(download_request.get_body_size())) * 100;
-		print(round(download_percent));
 		set_info_text("Downloading file... (" + str(round(download_percent)) + "% Complete)", Color.black);
 
 func refresh():
@@ -57,6 +56,7 @@ func _on_RepoData_request_completed(result, response_code, headers, body, reques
 	var json = JSON.parse(body.get_string_from_utf8());
 	if json.result is Dictionary:
 		if json.result.message:
+			print(json.result.message)
 			set_info_text("Github API rate limit exceeded. Wait at least an hour.", Color.red);
 			downloading_panel.hide();
 			return;
@@ -92,7 +92,7 @@ func _on_VersionData_request_completed(result, response_code, headers, body, rep
 	
 	for repo in repo_data_dict:
 		if repo_data_dict.get(repo).size() == 0:
-			print("Repo had no versions! Skipping: " + repo.name);
+			print("Repo had no versions! Skipping " + repo.name);
 			repo_data_dict.erase(repo);
 			return;
 	
@@ -198,41 +198,29 @@ func _on_DownloadRequest_request_completed(result, response_code, headers, body)
 	download_game(selected_release);
 
 func download_game(selected_release):
-	print("saving to: " + APP_PATH + "/games/" + AppHandler.current_repo_data.name + "/versions/" + selected_release.tag_name + "/" + selected_release.assets[0].name);
 	download_request.download_file = APP_PATH + "/games/" + AppHandler.current_repo_data.name + "/versions/" + selected_release.tag_name + "/" + selected_release.assets[0].name;
 	download_request.request(selected_release.assets[0].browser_download_url);
 	set_info_text("Downloading file...", Color.black);
 	downloading = true;
 
 func _on_Download_completed(result, response_code, headers, body):
+	download_percent = 0;
+	
+	var zip_path = APP_PATH + "/games/" + AppHandler.current_repo_data.name + "/versions/" + selected_release.tag_name;
+	extract_zip(zip_path, selected_release.assets[0].name);
+	#unzip_project(AppHandler.current_repo_data.name);
+	
 	set_info_text("Successfully downloaded " + AppHandler.current_repo_data.name + ".", Color.green);
 	downloading = false;
 	downloading_panel.hide();
-	download_percent = 0;
-	
-	unzip_project(AppHandler.current_repo_data.name);
 	
 	refresh_local_tab();
 
-func unzip_project(project_name):
-	var base_dir = OS.get_user_data_dir() + "/games/" + project_name + "/versions/" + selected_release.tag_name;
-	var file_name = base_dir + "/" + selected_release.assets[0].name;
-	print(file_name);
-	
-	var read_file = File.new();
-	if read_file.file_exists(file_name):
-		read_file.open(file_name, File.READ);
-		var content = read_file.get_buffer(read_file.get_len());
-		read_file.close();
-		
-		var dir = Directory.new();
-		dir.make_dir(base_dir + "/BRUH");
-		
-		var write_file = File.new();
-		write_file.open(base_dir + "/BRUH", File.WRITE);
-		write_file.store_buffer(content);
-		write_file.close();
-
+func extract_zip(path, file_name):
+	set_info_text("Extracting...", Color.black);
+	var output = []
+	OS.execute("python", ["./Scripts/extract.py", path + '/' + file_name, path], true, output);
+	print(output);
 
 func _on_RefreshButton_pressed():
 	refresh();
