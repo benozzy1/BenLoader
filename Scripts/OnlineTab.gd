@@ -14,20 +14,25 @@ onready var versions_option_button = get_node(versions_option_button_path);
 
 var repo_data_dict = {}
 
-var auth = "0664df420b845cd10bf8496417a8c22820cbb9e0";
-var headers = ["Authorization: token " + auth]
+var headers = [];
 
 var download_request;
 var downloading = false;
 
 func _ready():
+	var file = File.new();
+	file.open("res://auth.txt", File.READ);
+	var auth = file.get_as_text().strip_edges(true, true);
+	file.close();
+	headers = ["Authorization: token " + auth];
+	
 	download_request = HTTPRequest.new();
 	add_child(download_request);
 	download_request.use_threads = true;
 	download_request.connect("request_completed", self, "_on_Download_completed");
 
 var download_percent = 0;
-func _process(delta):
+func _process(_delta):
 	if downloading:
 		download_percent = (float(download_request.get_downloaded_bytes()) / float(download_request.get_body_size())) * 100;
 		set_info_text("Downloading file... (" + str(round(download_percent)) + "% Complete)", Color.black);
@@ -50,7 +55,7 @@ func refresh():
 	repos_request.connect("request_completed", self, "_on_RepoData_request_completed", [repos_request]);
 	repos_request.request("https://api.github.com/users/benozzy1/repos", headers, true, HTTPClient.METHOD_GET);
 
-func _on_RepoData_request_completed(result, response_code, headers, body, request_from):
+func _on_RepoData_request_completed(_result, _response_code, _headers, body, request_from):
 	request_from.queue_free();
 	
 	var json = JSON.parse(body.get_string_from_utf8());
@@ -73,7 +78,7 @@ func _on_RepoData_request_completed(result, response_code, headers, body, reques
 		versions_request.connect("request_completed", self, "_on_VersionData_request_completed", [repo_data, versions_request, is_last]);
 		versions_request.request("https://api.github.com/repos/benozzy1/" + repo_data.name + "/releases", headers, true, HTTPClient.METHOD_GET);
 
-func _on_VersionData_request_completed(result, response_code, headers, body, repo_data, request_from, is_last):
+func _on_VersionData_request_completed(_result, _response_code, _headers, body, repo_data, request_from, is_last):
 	request_from.queue_free();
 	
 	var json = JSON.parse(body.get_string_from_utf8());
@@ -103,7 +108,6 @@ func _on_VersionData_request_completed(result, response_code, headers, body, rep
 
 var button_group = ButtonGroup.new();
 func create_button_list():
-	var i = 0;
 	for repo_data in repo_data_dict.keys():
 		var list_button = Button.new();
 		list_button.toggle_mode = true;
@@ -114,7 +118,6 @@ func create_button_list():
 		$VBoxContainer/ScrollContainer/VBoxContainer.add_child(list_button);
 	
 		list_button.connect("pressed", self, "_on_ListButton_pressed", [repo_data, repo_data_dict.get(repo_data)]);
-		i += 1;
 	
 	if button_group.get_buttons().size() != 0:
 		button_group.get_buttons()[0].emit_signal("pressed");
@@ -149,13 +152,13 @@ func update_right_panel(repo_data, repo_versions):
 func _on_DownloadButton_pressed():
 	downloading_panel.show();
 	
-	var download_request = HTTPRequest.new();
-	add_child(download_request);
+	#var download_request = HTTPRequest.new();
+	#add_child(download_request);
 	download_request.request("https://api.github.com/repos/benozzy1/" + AppHandler.current_repo_data.name + "/releases");
 	download_request.connect("request_completed", self, "_on_DownloadRequest_request_completed");
 
 var selected_release;
-func _on_DownloadRequest_request_completed(result, response_code, headers, body):
+func _on_DownloadRequest_request_completed(_result, _response_code, _headers, body):
 	var json = JSON.parse(body.get_string_from_utf8());
 	
 	#print(json.result.assets[0].browser_download_url);
@@ -195,9 +198,9 @@ func _on_DownloadRequest_request_completed(result, response_code, headers, body)
 	
 	#var download_client = HTTPClient.new();
 	#download_client.request();
-	download_game(selected_release);
+	download_game();
 
-func download_game(selected_release):
+func download_game():
 	download_request.download_file = APP_PATH + "/games/" + AppHandler.current_repo_data.name + "/versions/" + selected_release.tag_name + "/" + selected_release.assets[0].name;
 	download_request.request(selected_release.assets[0].browser_download_url);
 	set_info_text("Downloading file...", Color.black);

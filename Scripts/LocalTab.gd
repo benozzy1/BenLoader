@@ -35,8 +35,7 @@ func refresh():
 	var button_group = ButtonGroup.new();
 	for repo_data in repos:
 		var folder_name = repo_data;
-		var file = File.new();
-		var data_path = APP_PATH + "games/" + folder_name;
+		#var data_path = APP_PATH + "games/" + folder_name;
 		
 		dir.open(OS.get_user_data_dir() + "/games/");
 		var versions_amount = list_files_in_directory(OS.get_user_data_dir() + "/games/" + folder_name + "/versions").size();
@@ -122,10 +121,6 @@ func _on_TabContainer_tab_changed(tab):
 		get_node(info_label_path).show();
 	else:
 		get_node(info_label_path).hide();
-	return;
-	if tab == 0:
-		get_node(info_label_path).show();
-		refresh();
 
 
 func _on_RefreshButton_pressed():
